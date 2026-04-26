@@ -1,27 +1,19 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
-import { ScheduleProvider } from "@/context/scheduleContext";
+﻿import type { ReactNode } from 'react';
+import { AuthProvider } from '@/context/AuthContext';
+import { ScheduleProvider } from '@/context/scheduleContext';
+import './globals.css';
 
-const inter = Inter({subsets:["latin"]});
-
-export const metadata: Metadata = {
-    title: "Clockhub",
-    description: "plataforma de gestion de horarios y calendarios"
+export const metadata = {
+  title: 'ClockHub',
+  description: 'Panel de control de horarios',
 };
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
+    <html lang='es'>
+      <body>
         <AuthProvider>
-          <ScheduleProvider>
-            {children}
-          </ScheduleProvider>
+          <ScheduleProvider>{children}</ScheduleProvider>
         </AuthProvider>
       </body>
     </html>

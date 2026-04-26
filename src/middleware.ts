@@ -17,15 +17,14 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // extraer el token del header de autorizacion 
 
   const authHeader = request.headers.get('authorization');
-  if (!authHeader || ! authHeader?.startsWith('Bearer')) {
-     return NextResponse.json(
-      { sucess:false, message: 'No Autorizado. token faltante'}
-      ,
-      { status: 401}
-     );
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return NextResponse.json(
+      { success: false, message: 'No autorizado. token faltante' },
+      { status: 401 }
+    );
   }
 
-  const token = authHeader.split('')[1];
+  const token = authHeader.split(' ')[1];
 
 // verificar el token usando la utilidad edge 
 

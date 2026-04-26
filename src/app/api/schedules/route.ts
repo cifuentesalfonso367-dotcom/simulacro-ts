@@ -97,6 +97,15 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<u
         endTime: end,
         userId,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     await prisma.auditLog.create({

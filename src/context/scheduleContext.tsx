@@ -3,19 +3,30 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Schedule } from '@prisma/client';
 
+type ScheduleWithUser = Schedule & {
+  user?: { id: string; name: string; email: string };
+};
+
 interface ScheduleContextType {
-  schedules: Schedule[];
+  schedules: ScheduleWithUser[];
   isLoading: boolean;
   error: string | null;
   fetchSchedules: () => Promise<void>;
-  addScheduleLocally: (schedule: Schedule) => void;
+  createSchedule: (payload: {
+    title: string;
+    description?: string;
+    startTime: string;
+    endTime: string;
+    userId: string;
+  }) => Promise<{ success: boolean; message: string }>; 
+  addScheduleLocally: (schedule: ScheduleWithUser) => void;
   removeScheduleLocally: (id: string) => void;
 }
 
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
 
 export const ScheduleProvider = ({ children }: { children: ReactNode }) => {
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleWithUser[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +54,45 @@ export const ScheduleProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addScheduleLocally = (schedule: Schedule) => {
+  const createSchedule = async (payload: {
+    title: string;
+    description?: string;
+    startTime: string;
+    endTime: string;
+    userId: string;
+  }): Promise<{ success: boolean; message: string }> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('/api/schedules', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setSchedules((prev) => [...prev, result.data]);
+        return { success: true, message: result.message };
+      }
+
+      setError(result.message);
+      return { success: false, message: result.message };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error de conexión al crear horario';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addScheduleLocally = (schedule: ScheduleWithUser) => {
     setSchedules((prev) => [...prev, schedule]);
   };
 
@@ -52,7 +101,7 @@ export const ScheduleProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <ScheduleContext.Provider value={{ schedules, isLoading, error, fetchSchedules, addScheduleLocally, removeScheduleLocally }}>
+    <ScheduleContext.Provider value={{ schedules, isLoading, error, fetchSchedules, createSchedule, addScheduleLocally, removeScheduleLocally }}>
       {children}
     </ScheduleContext.Provider>
   );

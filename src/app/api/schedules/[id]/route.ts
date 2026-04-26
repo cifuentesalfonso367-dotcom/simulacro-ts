@@ -1,12 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ApiResponse } from '@/types';
 import { Role } from '@prisma/client';
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse>> {
+  const { params } = context;
+  const { id: scheduleId } = await params;
   try {
     const requesterRole = request.headers.get('x-user-role') as Role;
     const requesterId = request.headers.get('x-user-id') as string;
@@ -17,8 +19,6 @@ export async function DELETE(
         { status: 403 }
       );
     }
-
-    const scheduleId = params.id;
 
     const existingSchedule = await prisma.schedule.findUnique({
       where: { id: scheduleId },
