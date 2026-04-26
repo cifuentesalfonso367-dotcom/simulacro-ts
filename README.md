@@ -48,6 +48,6 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la 
 
 ## 📁 Estructura Principal
 
-- `/app` o `/src/app` - Páginas y rutas de la aplicación Next.js.
+- `/src/app` - Páginas y rutas de la aplicación Next.js.
 - `/prisma` - Configuración de la base de datos y esquemas de Prisma.
 - `.env` - Archivo donde van tus secretos (¡No lo subas a GitHub!).
