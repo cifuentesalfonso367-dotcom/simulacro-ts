@@ -24,22 +24,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const checkSession = async () => {
-      // Aquí iría la lógica para validar el refreshToken al cargar la app
-      // Por simplicidad en este paso, simularemos que no hay sesión activa de inicio
-      setIsLoading(false);
-    };
-
-    checkSession();
+    // Restore session from localStorage on mount
+    try {
+      const token = localStorage.getItem('accessToken');
+      const savedUser = localStorage.getItem('authUser');
+      if (token && savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch {
+      // Invalid data, clear it
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('authUser');
+    }
+    setIsLoading(false);
   }, []);
 
   const login = (token: string, userData: AuthUser) => {
     localStorage.setItem('accessToken', token);
+    localStorage.setItem('authUser', JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('authUser');
     setUser(null);
     // Idealmente, también se debería llamar a un endpoint para invalidar la cookie HttpOnly
   };

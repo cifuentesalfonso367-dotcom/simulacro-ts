@@ -2,9 +2,8 @@
 
 import React, { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/card';
 
 export default function LoginPage() {
   const [email, setEmail] = useState<string>('');
@@ -25,9 +24,7 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await response.json();
-
       if (data.success) {
         login(data.data.accessToken, data.data.user);
         router.push('/dashboard');
@@ -42,50 +39,50 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fdfbf7] p-6 relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-[#d4c3a3]/40 rounded-full mix-blend-multiply filter blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-slate-800/20 rounded-full mix-blend-multiply filter blur-[100px] pointer-events-none"></div>
-
-      <Card className="w-full max-w-lg relative z-10">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: 'var(--bg-primary)' }}>
+      <div className="w-full max-w-md animate-scale-in">
+        {/* Logo */}
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-serif text-slate-900 tracking-tight mb-2">
-            ClockHub
-          </h1>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5" style={{ background: 'linear-gradient(135deg, var(--accent-violet), #a78bfa)' }}>
+            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold gradient-text tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>ClockHub</h1>
+          <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Gestión inteligente de turnos</p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-800 uppercase tracking-widest ml-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#fdfbf7]/60 backdrop-blur-md border border-[#e5d9c5]/80 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 p-4 rounded-xl outline-none text-slate-900 transition-all shadow-inner"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-800 uppercase tracking-widest ml-1">Contraseña</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#fdfbf7]/60 backdrop-blur-md border border-[#e5d9c5]/80 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 p-4 rounded-xl outline-none text-slate-900 transition-all shadow-inner"
-              required
-            />
-          </div>
-          
-          {error && (
-            <div className="p-4 bg-red-900/10 backdrop-blur-md border border-red-900/20 text-red-900 text-sm text-center rounded-xl font-medium">
-              {error}
+
+        {/* Form */}
+        <div className="glass-card p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-widest ml-1" style={{ color: 'var(--text-secondary)' }}>Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-field" placeholder="tu@email.com" required />
             </div>
-          )}
-          
-          <Button type="submit" className="w-full mt-6 py-4" isLoading={isLoading}>
-            Ingresar
-          </Button>
-        </form>
-      </Card>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-widest ml-1" style={{ color: 'var(--text-secondary)' }}>Contraseña</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-field" placeholder="••••••••" required />
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-xl text-sm text-center font-medium animate-slide-up" style={{ background: 'rgba(251, 113, 133, 0.1)', border: '1px solid rgba(251, 113, 133, 0.2)', color: 'var(--accent-rose)' }}>
+                {error}
+              </div>
+            )}
+
+            <button type="submit" className="btn-primary w-full" disabled={isLoading}>
+              {isLoading ? 'Ingresando...' : 'Ingresar'}
+            </button>
+
+            <div className="text-center pt-2">
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                ¿No tienes cuenta?{' '}
+                <Link href="/register" className="font-semibold hover:underline" style={{ color: 'var(--accent-violet)' }}>Regístrate</Link>
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

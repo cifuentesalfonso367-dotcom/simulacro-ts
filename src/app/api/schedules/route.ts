@@ -7,13 +7,19 @@ export async function GET(request: Request): Promise<NextResponse<ApiResponse<un
   try {
     const { searchParams } = new URL(request.url);
     const targetUserId = searchParams.get('userId');
+    const requesterRole = request.headers.get('x-user-role') as Role;
+    const requesterId = request.headers.get('x-user-id') as string;
 
     // Filtros base: Solo traer horarios activos
     const whereClause: Record<string, unknown> = {
       status: 'ACTIVE',
     };
 
-    if (targetUserId) {
+    if (requesterRole === 'EMPLOYEE') {
+      // Si es empleado, solo ve las tareas asignadas a él mismo
+      whereClause.userId = requesterId;
+    } else if (targetUserId) {
+      // Si es admin/manager y busca un usuario específico
       whereClause.userId = targetUserId;
     }
 
@@ -51,9 +57,11 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<u
     }
 
     const body = await request.json();
-    const { title, description, startTime, endTime, userId } = body;
+    const { title, description, startTime, endTime, userIds } = body;
 
-    if (!title || !startTime || !endTime || !userId) {
+    const targetIds = userIds || (body.userId ? [body.userId] : []);
+
+    if (!title || !startTime || !endTime || targetIds.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Faltan campos obligatorios' },
         { status: 400 }
@@ -73,52 +81,55 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<u
     // Validación de conflictos
     const conflict = await prisma.schedule.findFirst({
       where: {
-        userId,
+        userId: { in: targetIds },
         status: 'ACTIVE',
         AND: [
           { startTime: { lt: end } },
           { endTime: { gt: start } }
         ]
-      }
+      },
+      include: { user: true }
     });
 
     if (conflict) {
       return NextResponse.json(
-        { success: false, message: 'El usuario ya tiene un horario asignado en ese lapso' },
+        { success: false, message: `El usuario ${conflict.user.name} ya tiene un horario asignado en ese lapso` },
         { status: 409 }
       );
     }
 
-    const newSchedule = await prisma.schedule.create({
-      data: {
-        title,
-        description,
-        startTime: start,
-        endTime: end,
-        userId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    const newSchedules = await Promise.all(
+      targetIds.map(async (uid: string) => {
+        const newSchedule = await prisma.schedule.create({
+          data: {
+            title,
+            description,
+            startTime: start,
+            endTime: end,
+            userId: uid,
           },
-        },
-      },
-    });
+          include: {
+            user: {
+              select: { id: true, name: true, email: true },
+            },
+          },
+        });
 
-    await prisma.auditLog.create({
-      data: {
-        action: 'CREATE_SCHEDULE',
-        entity: 'Schedule',
-        entityId: newSchedule.id,
-        userId: requesterId,
-      },
-    });
+        await prisma.auditLog.create({
+          data: {
+            action: 'CREATE_SCHEDULE',
+            entity: 'Schedule',
+            entityId: newSchedule.id,
+            userId: requesterId,
+          },
+        });
+
+        return newSchedule;
+      })
+    );
 
     return NextResponse.json(
-      { success: true, message: 'Horario creado exitosamente', data: newSchedule },
+      { success: true, message: 'Horarios creados exitosamente', data: newSchedules },
       { status: 201 }
     );
   } catch (error: unknown) {

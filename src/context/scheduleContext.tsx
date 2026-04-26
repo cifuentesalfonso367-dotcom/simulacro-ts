@@ -17,7 +17,7 @@ interface ScheduleContextType {
     description?: string;
     startTime: string;
     endTime: string;
-    userId: string;
+    userIds: string[];
   }) => Promise<{ success: boolean; message: string }>; 
   addScheduleLocally: (schedule: ScheduleWithUser) => void;
   removeScheduleLocally: (id: string) => void;
@@ -30,7 +30,7 @@ export const ScheduleProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSchedules = async () => {
+  const fetchSchedules = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -52,14 +52,14 @@ export const ScheduleProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const createSchedule = async (payload: {
+  const createSchedule = React.useCallback(async (payload: {
     title: string;
     description?: string;
     startTime: string;
     endTime: string;
-    userId: string;
+    userIds: string[];
   }): Promise<{ success: boolean; message: string }> => {
     setIsLoading(true);
     setError(null);
@@ -77,7 +77,7 @@ export const ScheduleProvider = ({ children }: { children: ReactNode }) => {
       const result = await response.json();
 
       if (result.success) {
-        setSchedules((prev) => [...prev, result.data]);
+        setSchedules((prev) => [...prev, ...result.data]);
         return { success: true, message: result.message };
       }
 
@@ -90,15 +90,15 @@ export const ScheduleProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const addScheduleLocally = (schedule: ScheduleWithUser) => {
+  const addScheduleLocally = React.useCallback((schedule: ScheduleWithUser) => {
     setSchedules((prev) => [...prev, schedule]);
-  };
+  }, []);
 
-  const removeScheduleLocally = (id: string) => {
+  const removeScheduleLocally = React.useCallback((id: string) => {
     setSchedules((prev) => prev.filter((s) => s.id !== id));
-  };
+  }, []);
 
   return (
     <ScheduleContext.Provider value={{ schedules, isLoading, error, fetchSchedules, createSchedule, addScheduleLocally, removeScheduleLocally }}>
